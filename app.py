@@ -3,7 +3,6 @@ import pandas as pd
 import tensorflow as tf
 from keras.preprocessing.text import Tokenizer
 from keras.utils import pad_sequences
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import numpy as np
 from datasets import load_dataset
 
@@ -43,7 +42,7 @@ def main():
     df = pd.DataFrame(dataset)
 
     # Specify the path to your trained model
-    model_filepath = 'model/model.h5'
+    model_filepath = 'model.h5'
 
     # Create a Streamlit app
     st.title("Sarcastic Headline Detection")
