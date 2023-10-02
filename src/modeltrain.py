@@ -1,73 +1,76 @@
-from keras.layers import LSTM, Dropout, Dense
-from keras.models import Sequential
-from keras.callbacks import EarlyStopping
-from keras.optimizers import RMSprop
-from keras.losses import mean_squared_error
-from keras_tuner.tuners import RandomSearch
-from keras_tuner.engine.hyperparameters import HyperParameters
-from tensorflow import keras
-from keras.layers import LSTM, Dropout, Dense
-from keras.models import Sequential
-from keras.callbacks import EarlyStopping
-from keras.optimizers import RMSprop
-from keras.losses import mean_squared_error
-from keras_tuner.tuners import RandomSearch
-from keras_tuner.engine.hyperparameters import HyperParameters
 import tensorflow as tf
-from sklearn.metrics import confusion_matrix, classification_report
-import os
+from keras.models import Sequential
+from keras.layers import Embedding, LSTM, SpatialDropout1D, Dense
+from keras.utils import to_categorical
+from sklearn.metrics import classification_report
+from keras import optimizers
+from tensorflow.keras.layers import Dense, Dropout, Activation
+import numpy as np
+import json
 
-
-def build_model_function(hp, X_train, y_train):
+def trainmodel(X_train, y_train, X_test, y_test):
     with tf.device('/cpu:0'):
+        # Reshape input data to add the batch size dimension
+        X_train = X_train.reshape(X_train.shape[0], X_train.shape[1], 1)
+        X_test = X_test.reshape(X_test.shape[0], X_test.shape[1], 1)
+
+        # Build the model
         model = Sequential()
-        model.add(LSTM(hp.Int('units', min_value=32, max_value=512, step=32), input_shape=(X_train.shape[1], 1)))
-        model.add(Dense(1))
-        model.compile(loss='mse', optimizer='adam', metrics=[tf.keras.metrics.MeanSquaredError()])
+        model.add(LSTM(128, dropout=0.2, recurrent_dropout=0.2, input_shape=(X_train.shape[1], 1)))
+        model.add(Dense(1, activation='sigmoid'))  # Use 'sigmoid' for binary classification
+        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+        print(model.summary())
+
+        # Train the model
+        history = model.fit(X_train, y_train, epochs=10, batch_size=32, validation_split=0.1)
+        score, acc = model.evaluate(X_test, y_test, batch_size=64)
+        print('Test score:', score)
+        print('Test accuracy:', acc)
+
+        # Make predictions without converting to binary
+        y_pred = model.predict(X_test)
+
+        # Make predictions with converting to binary
+        y_pred = (y_pred > 0.5)
+
+        # Print classification report
+        print(classification_report(y_test, y_pred))
+
+        # Save the model
+        model.save('/Users/rianrachmanto/miniforge3/project/sarcastic_detection/model/model.h5')
+
+        # Define your model configuration
+        model_config = {
+            "layers": [
+                {
+                    "name": "LSTM",
+                    "config": {
+                        "units": 128,
+                        "dropout": 0.2,
+                        "recurrent_dropout": 0.2,
+                        "input_shape": (X_train.shape[1], 1)
+                    }
+                },
+                {
+                    "name": "Dense",
+                    "config": {
+                        "units": 1,
+                        "activation": "sigmoid"
+                    }
+                }
+            ],
+            "compile_args": {
+                "loss": "binary_crossentropy",
+                "optimizer": "adam",
+                "metrics": ["accuracy"]
+            }
+        }
+
+        # Save the configuration to a JSON file
+        with open('/Users/rianrachmanto/miniforge3/project/sarcastic_detection/model/config.json', 'w') as config_file:
+            json.dump(model_config, config_file, indent=4)
+
+        print("Model configuration saved to config.json")
+
         return model
-    
-
-def tune_hyperparameters_function(X_train, y_train):
-    tuner = RandomSearch(
-        lambda hp: build_model_function(hp, X_train, y_train),
-        objective='mean_squared_error',
-        max_trials=10,
-        directory='keras_tuner',
-        project_name='custom_model'
-    )
-
-    # Define a callback to stop training early if necessary
-    stop_early = keras.callbacks.EarlyStopping(monitor='val_loss', patience=5)
-
-    tuner.search(X_train, y_train, epochs=10, batch_size=32, validation_split=0.2, callbacks=[stop_early])
-
-    # Get the best hyperparameters
-    best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
-
-    return best_hps
-
-def train_best_model_function(X_train, y_train, X_test, y_test):
-    best_hps = tune_hyperparameters_function(X_train, y_train)
-
-    # Build the best model with the tuned hyperparameters
-    best_model = build_model_function(best_hps, X_train, y_train)
-
-    # Train the best model
-    best_model.fit(X_train, y_train, epochs=10, batch_size=32, validation_split=0.2)
-
-    # Evaluate the best model
-    evaluate_model_function(best_model, X_test, y_test, save_path="/Users/rianrachmanto/miniforge3/project/sarcastic_detection/model")
-
-
-
-def evaluate_model_function(model, X_test, y_test, save_path=None):
-    y_pred = model.predict(X_test)
-    y_pred = (y_pred > 0.5)  # Adjust the threshold as needed
-    print(confusion_matrix(y_test, y_pred))
-    print(classification_report(y_test, y_pred))
-
-    if save_path:
-        os.makedirs(save_path, exist_ok=True)
-        model.save(os.path.join(save_path, 'trained_model.h5'))
-
 

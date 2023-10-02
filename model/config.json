@@ -1,0 +1,31 @@
+{
+    "model_type": "Sequential",
+    "layers": [
+        {
+            "name": "LSTM",
+            "config": {
+                "units": 128,
+                "dropout": 0.2,
+                "recurrent_dropout": 0.2,
+                "input_shape": [
+                    34,
+                    1
+                ]
+            }
+        },
+        {
+            "name": "Dense",
+            "config": {
+                "units": 1,
+                "activation": "sigmoid"
+            }
+        }
+    ],
+    "compile_args": {
+        "loss": "binary_crossentropy",
+        "optimizer": "adam",
+        "metrics": [
+            "accuracy"
+        ]
+    }
+}

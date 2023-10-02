@@ -1,0 +1,9 @@
+streamlit
+tensorflow
+keras
+datasets
+pandas
+huggingface-hub
+streamlit
+datasets
+numpy
