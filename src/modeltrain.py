@@ -39,38 +39,5 @@ def trainmodel(X_train, y_train, X_test, y_test):
         # Save the model
         model.save('/Users/rianrachmanto/miniforge3/project/sarcastic_detection/model/model.h5')
 
-        # Define your model configuration
-        model_config = {
-            "layers": [
-                {
-                    "name": "LSTM",
-                    "config": {
-                        "units": 128,
-                        "dropout": 0.2,
-                        "recurrent_dropout": 0.2,
-                        "input_shape": (X_train.shape[1], 1)
-                    }
-                },
-                {
-                    "name": "Dense",
-                    "config": {
-                        "units": 1,
-                        "activation": "sigmoid"
-                    }
-                }
-            ],
-            "compile_args": {
-                "loss": "binary_crossentropy",
-                "optimizer": "adam",
-                "metrics": ["accuracy"]
-            }
-        }
 
-        # Save the configuration to a JSON file
-        with open('/Users/rianrachmanto/miniforge3/project/sarcastic_detection/model/config.json', 'w') as config_file:
-            json.dump(model_config, config_file, indent=4)
-
-        print("Model configuration saved to config.json")
-
-        return model
 
