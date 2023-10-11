@@ -7,7 +7,7 @@ import numpy as np
 from datasets import load_dataset
 
 # Function to tokenize and pad input data
-def tokenize_pad(df, max_sequence_length=34):
+def tokenize_pad(df, max_sequence_length=20):
     max_features = 2000
     tokenizer = Tokenizer(num_words=max_features, split=' ')
     tokenizer.fit_on_texts(df['headline'].values)
