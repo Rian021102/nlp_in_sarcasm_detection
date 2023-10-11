@@ -11,11 +11,7 @@ from nltk.stem import WordNetLemmatizer
 def datapipeline(pathfile):
     df = pd.read_csv(pathfile)
     df.drop_duplicates(subset="headline", keep='last', inplace=True)
-    X = df[['headline']]  # Return a DataFrame with 'headline' column
-    y = df['is_sarcastic']
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    print(X_train.head())
-    return X_train, X_test, y_train, y_test
+    return df
 
 class TextPreprocessor:
     def __init__(self):
