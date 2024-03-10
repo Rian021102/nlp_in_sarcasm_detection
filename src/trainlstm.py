@@ -1,6 +1,6 @@
 import tensorflow as tf
 from keras.models import Sequential
-from keras.layers import Embedding, LSTM, SpatialDropout1D, Dense, GlobalAveragePooling1D, BatchNormalization, SimpleRNN
+from keras.layers import Embedding, LSTM, SpatialDropout1D, Dense
 from keras.utils import to_categorical
 from sklearn.metrics import classification_report
 from keras import optimizers
@@ -10,45 +10,35 @@ from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+import json
 
-def trymodeling(X_train,y_train, X_test,y_test):
+def trainmodel(X_train, y_train, X_test, y_test):
     with tf.device('/cpu:0'):
-        model = tf.keras.Sequential([
-        Embedding(2000, 20, input_length=20),
-        SimpleRNN(64, return_sequences=True),
-        SimpleRNN(32),
-        Dense(64, activation='relu'),
-        Dropout(0.5),
-        BatchNormalization(),
-        Dense(32, activation='relu'),
-        Dropout(0.5),
-        BatchNormalization(),
-        Dense(1, activation='sigmoid')
-    ])
+        # Reshape input data to add the batch size dimension
+        X_train = X_train.reshape(X_train.shape[0], X_train.shape[1], 1)
+        X_test = X_test.reshape(X_test.shape[0], X_test.shape[1], 1)
 
-        model.compile(optimizer='adam',
-                      loss='binary_crossentropy',
-                      metrics=['accuracy'])
+        # Build the model
+        model = Sequential()
+        model.add(LSTM(128, dropout=0.2, recurrent_dropout=0.2, return_sequences=True, input_shape=(X_train.shape[1], 1)))
+        model.add(LSTM(64, dropout=0.2, recurrent_dropout=0.2))
+        model.add(Dense(1, activation='sigmoid'))
+        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
         print(model.summary())
 
-        # earlystop = EarlyStopping(monitor='val_loss',
-        earlystop = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
-                                                     patience=5,
-                                                     mode='min',
-                                                     restore_best_weights=True)
+        # Train the model
+        #set early stopping monitor so the model stops training when it won't improve anymore
+        earlystop = EarlyStopping(monitor='val_loss', 
+                                  patience=5, 
+                                  mode='min',
+                                  restore_best_weights=True)
         modelcheckpoint = tf.keras.callbacks.ModelCheckpoint(
-            filepath='/Users/rianrachmanto/miniforge3/project/sarcastic_detection/model/RNNmodel.h5',
+            filepath='/Users/rianrachmanto/miniforge3/project/sarcastic_detection/model/LSTMmodel.h5',
             monitor='val_loss',
             save_best_only=True)
-        
-        num_epochs = 100
-        history = model.fit(X_train, y_train,
-                            epochs=num_epochs,
-                            batch_size=32,
-                            validation_data=(X_test, y_test),
-                            verbose=1)
-        
-        #evaluate model
+        history = model.fit(X_train, y_train, epochs=100, batch_size=32, validation_split=0.1,
+                            callbacks=[earlystop, modelcheckpoint])
+        #evaluate the model
         score, acc = model.evaluate(X_test, y_test, batch_size=64)
         print('Test score:', score)
         print('Test accuracy:', acc)
@@ -61,7 +51,6 @@ def trymodeling(X_train,y_train, X_test,y_test):
 
         # Print classification report
         print(classification_report(y_test, y_pred))
-
         #plot confusion matrix
         cm = confusion_matrix(y_test, y_pred)
         sns.heatmap(cm, annot=True, fmt="d")
@@ -84,7 +73,7 @@ def trymodeling(X_train,y_train, X_test,y_test):
         plt.xlabel('No. epoch')
         plt.legend(loc="upper left")
         plt.show()
-        
         return model
-        
-        
+
+
+
