@@ -27,11 +27,85 @@ Output Gate: The Output Gate decides what information should be output from the 
 
 ![alt text](Images/0_yFa8vs_3yuVRcXAj.webp)
 
+```
+# Build the model
+        model = Sequential()
+        model.add(LSTM(128, dropout=0.2, recurrent_dropout=0.2, return_sequences=True, input_shape=(X_train.shape[1], 1)))
+        model.add(LSTM(64, dropout=0.2, recurrent_dropout=0.2))
+        model.add(Dense(1, activation='sigmoid'))
+        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+        print(model.summary())
+
+        # Train the model
+        #set early stopping monitor so the model stops training when it won't improve anymore
+        earlystop = EarlyStopping(monitor='val_loss', 
+                                  patience=5, 
+                                  mode='min',
+                                  restore_best_weights=True)
+        modelcheckpoint = tf.keras.callbacks.ModelCheckpoint(
+            filepath='/Users/rianrachmanto/miniforge3/project/sarcastic_detection/model/LSTMmodel.h5',
+            monitor='val_loss',
+            save_best_only=True)
+        history = model.fit(X_train, y_train, epochs=100, batch_size=32, validation_split=0.1,
+                            callbacks=[earlystop, modelcheckpoint])
+
+```
+
 ### Bi-directional LSTM
 In a bi-directional LSTM (Long Short-Term Memory) model, the architecture consists of two LSTM layers. One layer processes the input in a forward direction, while the other processes it in a backward direction, allowing for both forward and backward propagation of information through the network. This bidirectional processing enables the model to capture dependencies in both directions within the input sequence, enhancing its ability to understand contextual relationships and improve performance in tasks such as sequence prediction and natural language processing.
 
 ![alt text](Images/1_sf4vCzcyycSe7GC3dZ2u2w.webp)
 
+```
+# Build the model
+        model = Sequential()
+        model.add(Bidirectional(LSTM(128, dropout=0.2, recurrent_dropout=0.2, return_sequences=True), input_shape=(X_train.shape[1], 1)))
+        model.add(Bidirectional(LSTM(64, dropout=0.2, recurrent_dropout=0.2)))
+        model.add(Dense(1, activation='sigmoid'))
+        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+        print(model.summary())
+
+        # Train the model
+        #set early stopping monitor so the model stops training when it won't improve anymore
+        earlystop = EarlyStopping(monitor='val_loss', 
+                                  patience=5, 
+                                  mode='min',
+                                  restore_best_weights=True)
+        modelcheckpoint = tf.keras.callbacks.ModelCheckpoint(
+            filepath='/Users/rianrachmanto/miniforge3/project/sarcastic_detection/model/LSTMmodel.h5',
+            monitor='val_loss',
+            save_best_only=True)
+        history = model.fit(X_train, y_train, epochs=100, batch_size=32, validation_split=0.1,
+                            callbacks=[earlystop, modelcheckpoint])
+
+```
+## Result
+The LSTM results indicate that during training, the loss increases over epochs, suggesting that the trained model is likely experiencing overfitting.
+
+![alt text](Images/Epoch_loss_acc_LSTM.png)
+
+By conffusion matrix we can see that the
+- True Negative is 2417
+- False Negative is 1589
+- True Positive is 921
+- False Positive is 485
+
+Now with Bi-directional 
+
+The loss consistently decreases over epochs, the training however stops after 25 epochs suggesting that the loss is not improving, less than the LSTM that stops after 40 epochs.
+
+![alt text](Images/loss_acc_bid.png)
+
+Now let's take a look at the confussion matrix
+- True Negative is 2446
+- False Negative is 1629
+- True Positive is 881
+- False Positive is 456
+
+![alt text](Images/bid_CM.png)
+
+Considering these differences, it appears that while the bidirectional LSTM may perform marginally better in terms of true negatives and false positives, it struggles with false negatives compared to the standard LSTM. This suggests that the bidirectional LSTM may need further tuning or adjustments to improve its ability to correctly identify positive outcomes. Additionally, the decrease in true positives with the bidirectional LSTM indicates a potential area for improvement in capturing positive instances.
+In overall Bi-directional LSTM marginally performs better than LSTM model. However it is recommended to perform hyperparameter tuning and possibly addressing the imbalanced class as well.
 
 
 
