@@ -9,7 +9,7 @@ def main():
     preprocessor = TextPreprocessor()
     df['headline'] = df['headline'].apply(lambda x: preprocessor.preprocess_text(x))
     X_train, X_test,y_train,y_test = tokenize_pad_split(df)
-    model=trainmodelbid(X_train, y_train, X_test, y_test)
+    model=trainmodel(X_train, y_train, X_test, y_test)
 
 if __name__ == "__main__":
     main()

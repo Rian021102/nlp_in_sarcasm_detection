@@ -14,7 +14,7 @@ from transformers import AutoModel
 from transformers import pipeline
 
 
-def tokenize_pad(df, max_sequence_length=35):
+def tokenize_pad(df, max_sequence_length=20):
     max_features = 2000
     tokenizer = Tokenizer(num_words=max_features, split=' ')
     tokenizer.fit_on_texts(df['headline'].values)
@@ -43,9 +43,7 @@ def predict_model(df, model_path):
 
 def main():
     # Load the dataset from Hugging Face
-    dataset = load_dataset("Rianknow/sarcastic_headline", split='test',streaming=True)
-
-    df = pd.DataFrame(dataset)
+    df=pd.read_csv('/Users/rianrachmanto/miniforge3/project/sarcastic_detection/data/test.csv')
 
     # Specify the path to your trained model
     model_filepath = '/Users/rianrachmanto/miniforge3/project/sarcastic_detection/model/model.h5'
