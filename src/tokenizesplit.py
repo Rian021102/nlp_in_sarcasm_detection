@@ -1,4 +1,4 @@
-from keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.text import Tokenizer
 from keras.utils import pad_sequences
 from sklearn.model_selection import train_test_split
 #import compute_class_weight
