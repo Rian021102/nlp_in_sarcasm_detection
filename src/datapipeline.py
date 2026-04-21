@@ -8,8 +8,8 @@ from nltk.corpus import stopwords
 import string
 from nltk.stem import WordNetLemmatizer
 from sklearn.model_selection import train_test_split
-from keras.preprocessing.text import Tokenizer
-from keras.utils import pad_sequences
+from torch.nn.utils.rnn import pad_sequence
+import torch
 from sklearn.model_selection import train_test_split
 
 
@@ -76,17 +76,31 @@ class TextPreprocessor2:
         text = self.remove_extra_whitespaces(text)
         return text
     
-def tokenizing (X_train, X_test):
+def tokenizing(X_train, X_test):
     max_features = 2000
-    tokenizer = Tokenizer(num_words=max_features, split=' ')
-    tokenizer.fit_on_texts(X_train['headline'])
+    maxlen = 20
 
-    X_train = tokenizer.texts_to_sequences(X_train['headline'].values)
-    X_train = pad_sequences(X_train,maxlen=20)  # Pad to a fixed length
+    # Build vocabulary from training data only
+    word_counts = {}
+    for text in X_train['headline']:
+        for word in str(text).split():
+            word_counts[word] = word_counts.get(word, 0) + 1
+    # Reserve 0 for padding, 1 for unknown
+    vocab = sorted(word_counts, key=word_counts.get, reverse=True)[:max_features - 2]
+    word_index = {word: idx + 2 for idx, word in enumerate(vocab)}
 
-    tokenizer.fit_on_texts(X_test['headline'].values)
-    X_test = tokenizer.texts_to_sequences(X_test['headline'].values)
-    X_test = pad_sequences(X_test, maxlen=20)  # Pad to a fixed length
+    def encode_and_pad(texts):
+        sequences = []
+        for text in texts:
+            seq = [word_index.get(w, 1) for w in str(text).split()]
+            seq = seq[:maxlen]
+            # Pre-pad with zeros
+            padded = [0] * (maxlen - len(seq)) + seq
+            sequences.append(padded)
+        return np.array(sequences, dtype=np.int64)
+
+    X_train = encode_and_pad(X_train['headline'].values)
+    X_test = encode_and_pad(X_test['headline'].values)
 
     print(X_train.shape)
     print(X_test.shape)

@@ -1,10 +1,10 @@
 from datapipn import datapipeline, TextPreprocessor
 from tokenizesplit import tokenize_pad_split, calculate_class_weights
 from trainlstm import trainmodel
-from bidrlstm import trainmodelbid
+# from bidrlstm import trainmodelbid
 
 def main():
-    filepath = '/Users/rianrachmanto/miniforge3/project/sarcastic_detection/data/train.csv'
+    filepath = '/home/rian/python_project/myvenv/nlp_in_sarcasm_detection/data/train.csv'
     df = datapipeline(filepath)
     preprocessor = TextPreprocessor()
     df['headline'] = df['headline'].apply(lambda x: preprocessor.preprocess_text(x))
